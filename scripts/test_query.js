@@ -1,10 +1,4 @@
-{
-	"compiler": {
-		"version": "0.8.14+commit.80d49f37"
-	},
-	"language": "Solidity",
-	"output": {
-		"abi": [
+let abi = [
 			{
 				"anonymous": false,
 				"inputs": [],
@@ -126,42 +120,43 @@
 				"stateMutability": "payable",
 				"type": "function"
 			}
-		],
-		"devdoc": {
-			"kind": "dev",
-			"methods": {},
-			"version": 1
-		},
-		"userdoc": {
-			"kind": "user",
-			"methods": {},
-			"version": 1
-		}
-	},
-	"settings": {
-		"compilationTarget": {
-			"contracts/10_WalletSmartContract.sol": "WalletSmartContract"
-		},
-		"evmVersion": "london",
-		"libraries": {},
-		"metadata": {
-			"bytecodeHash": "ipfs"
-		},
-		"optimizer": {
-			"enabled": false,
-			"runs": 200
-		},
-		"remappings": []
-	},
-	"sources": {
-		"contracts/10_WalletSmartContract.sol": {
-			"keccak256": "0xc64e60efaabb2c5d3908579b69da10ca6aa252a334c5812fc58eb69f9955b231",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://f9fbb3a2192dcec5728c55e5a9854361910d45cf4ae92013facd05a061971241",
-				"dweb:/ipfs/QmZJ5UXTbrrkdm96jjgZcVmYJ1SRL6Z4FtSXn1kwFLcsV4"
-			]
-		}
-	},
-	"version": 1
+		];
+
+const Web3 = require('web3');
+const contractAddr = "0x442371264e257c429DB93d204EFdad170638716B";
+const eventResult = "";
+
+let accounts;
+let web3;
+
+async function enableDapp() {
+    if (typeof window.ethereum != 'undefined') {
+        try {
+            accounts = await ethereum.request({
+                method: 'eth_requestAccounts'
+            });
+            web3 = new Web3(window.ethereum);
+            console.log("Accounts: " + accounts[0]);
+        } catch (error) {
+            if (error.code == 4001) {
+                console.log("You don't have the permission to continue.");
+            } else {
+                console.error(error.message);
+            }
+        }
+    } else {
+        console.log("You need to install MetaMask");
+    }
 }
+
+async function listenToEvents() {
+    let contractInstance = new web3.eth.Contract(abi, contractAddr);
+    console.log(contractInstance.getPastEvents('DepositSuccess'));
+    contractInstance.getPastEvents("DepositSuccess", {fromBlock: 0}).then(event => {
+        console.log(event);
+    });
+
+}
+
+listenToEvents();
+enableDapp();

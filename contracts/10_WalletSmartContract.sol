@@ -6,26 +6,34 @@ contract WalletSmartContract {
 
     mapping(address => Balance) private accounts;
 
+    event DepositSuccess();
+    event WithdrawSuccess(uint _value);
+    event TokensSent(address indexed _from, address indexed _to, uint _amount);
+
     function deposit() public payable {
         Transaction memory transaction = Transaction(msg.value, block.timestamp);
         accounts[msg.sender].totalBalance += transaction.amount;
         accounts[msg.sender].numberOfDeposits++;
         accounts[msg.sender].mappingDeposits[accounts[msg.sender].numberOfDeposits] = transaction;
+
+        emit DepositSuccess();
     }
 
     function withdraw(uint _value) public payable{
-        require((accounts[msg.sender].totalBalance >= _value), "Insufficient Balance");
+        proofOfReserve(_value);
 
         Transaction memory transaction = Transaction(_value, block.timestamp);
         accounts[msg.sender].totalBalance -= transaction.amount;
         accounts[msg.sender].numberOfWithdrawals++;
         accounts[msg.sender].mappingWithdrawals[accounts[msg.sender].numberOfWithdrawals] = transaction;
         payable(msg.sender).transfer(_value);
+
+        emit WithdrawSuccess(_value);
         
     }
 
     function sendToAddress(address _receiver, uint _value) public {
-        require((accounts[msg.sender].totalBalance >= _value), "Insufficient Balance");
+        proofOfReserve(_value);
 
         Transaction memory transaction = Transaction(_value, block.timestamp);
         accounts[msg.sender].totalBalance -= transaction.amount;
@@ -35,6 +43,9 @@ contract WalletSmartContract {
         accounts[_receiver].totalBalance += transaction.amount;
         accounts[_receiver].numberOfReceivals++;
         accounts[_receiver].mappingReceivals[accounts[_receiver].numberOfReceivals] = transaction;
+
+        emit TokensSent(msg.sender, _receiver, _value);
+
     }
     
     function checkAccountBalance() public view returns (uint) {
@@ -45,7 +56,12 @@ contract WalletSmartContract {
         return address(this).balance;
     }
 
+    function proofOfReserve(uint _value) public view {
+        require((accounts[msg.sender].totalBalance >= _value), "Insufficient Balance");
+    }
+
 }
+
 
 struct Balance {
     uint totalBalance;
